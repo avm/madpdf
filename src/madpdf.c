@@ -536,9 +536,9 @@ int main ( int argc, char ** argv )
     load_settings(configfile);
     
     win = ewl_window_new();
-    ewl_window_title_set ( EWL_WINDOW ( win ), "EWL_WINDOW" );
-    ewl_window_name_set ( EWL_WINDOW ( win ), "EWL_WINDOW" );
-    ewl_window_class_set ( EWL_WINDOW ( win ), "EWLWindow" );
+    ewl_window_title_set ( EWL_WINDOW ( win ), "MadPDF" );
+    ewl_window_name_set ( EWL_WINDOW ( win ), "madpdf" );
+    ewl_window_class_set ( EWL_WINDOW ( win ), "MadPDF" );
     ewl_object_size_request ( EWL_OBJECT ( win ), 600, 800 );
     ewl_callback_append ( win, EWL_CALLBACK_DELETE_WINDOW, destroy_cb, NULL );
     ewl_callback_append(win, EWL_CALLBACK_KEY_DOWN, cb_key_down, NULL);
