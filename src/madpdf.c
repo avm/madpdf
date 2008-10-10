@@ -44,9 +44,7 @@ Ewl_Widget *pdfwidget = NULL;
 Ewl_Widget *scrollpane = NULL;
 Ewl_Widget *trimpane = NULL;
 Ewl_Widget *menu=NULL;
-char statlabel1str[100];
 Ewl_Widget *statlabel1=NULL;
-char statlabel2str[100];
 Ewl_Widget *statlabel2=NULL;
 Ewl_Widget *goto_entry;
 double curscale=1.0;
@@ -266,6 +264,7 @@ void resize_and_rescale(double scale)
 }
 void update_statusbar()
 {
+    static char statlabel1str[100];
     sprintf(statlabel1str,"MadPDF (OK for Menu)");
     ewl_label_text_set(EWL_LABEL(statlabel1),statlabel1str);
     
@@ -273,6 +272,7 @@ void update_statusbar()
     curpage=ewl_pdf_page_get(EWL_PDF(pdfwidget))+1;
     totalpage=epdf_document_page_count_get(ewl_pdf_pdf_document_get(EWL_PDF(pdfwidget)));
     
+    static char statlabel2str[100];
     sprintf(statlabel2str,"pg: %d/%d  zoom: %d%%  ",curpage,totalpage,(int)round(curscale*100.0));
     double hpos,vpos;
     int leftarr=0,rightarr=0,downarr=0,uparr=0;
