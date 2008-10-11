@@ -333,7 +333,6 @@ void cb_key_down(Ewl_Widget *w, void *ev, void *data)
     case 0:
         ewl_pdf_page_next(EWL_PDF(curwidget));
         resize_and_rescale(curscale);
-        fprintf(stderr,"l:%d; r:%d; t:%d; b:%d\n",get_left_margin(),get_right_margin(),get_top_margin(),get_bottom_margin());
         break;
     case 9:
         ewl_pdf_page_previous(EWL_PDF(curwidget));
