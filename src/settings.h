@@ -3,6 +3,9 @@
 
 typedef struct 
 {
+    // The minimum amount (%) of overlap between panning positions
+    int pan_overlap;
+
     int hpan;
     int vpan;
     int ltrimpad;
@@ -15,4 +18,5 @@ progsettings *get_settings();
 void load_settings(const char *filename);
 void free_settings();
 
+/* vim:set sw=4 ts=4 et: */
 #endif

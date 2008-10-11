@@ -31,6 +31,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include <Ewl.h>
 #include <Epdf.h>
 #include <ewl_pdf.h>
@@ -77,23 +78,43 @@ void update_main_app()
     
 }
 
+static double pan_inc(double doc, double win)
+{
+    if(doc <= win)
+        // no need to scroll
+        return 0.0;
+
+    /* Now panning comes into the picture.
+     * We have this setting, the "minimum pan overlap" (%).
+     * Let us prepare the absolute (minimum) overlap amount, in pixels. */
+    double overlap_fraction = (double)get_settings()->pan_overlap / 100.0;
+    double overlap_amount = win * overlap_fraction;
+
+    /* The question is: how many pannings do we need per page,
+     * given the doc and win sizes and the overlap amount? */
+    double pan_steps = ceil((doc - overlap_amount) / (win - overlap_amount));
+    assert(pan_steps > 1.0);
+
+    /* To move to next step (we can do that pan_steps - 1 times),
+     * advance a (pan_steps - 1)th part of what is outside the window. */
+    double pan_step_amount = (doc - win) / (pan_steps - 1);
+
+    /* Now convert that to scrollbar movement units. */
+    return pan_step_amount / (doc - win);
+}
 
 double get_horizontal_pan_inc()
 {
     double ws=(double)CURRENT_W(scrollpane);
     double wt=(double)CURRENT_W(trimpane);
-    if(wt<=ws)
-        return 0.0;
-    return ((double)get_settings()->hpan)*ws/(100.0*(wt-ws));
+    return pan_inc(wt, ws);
     
 }
 double get_vertical_pan_inc()
 {
     double hs=(double)CURRENT_H(scrollpane);
     double ht=(double)CURRENT_H(trimpane);
-    if(ht<=hs)
-        return 0.0;
-    return ((double)get_settings()->vpan)*hs/(100.0*(ht-hs));
+    return pan_inc(ht, hs);
 }
 
 int translate_key(Ewl_Event_Key_Down* e)
