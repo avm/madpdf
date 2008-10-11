@@ -48,7 +48,6 @@ Ewl_Widget *statlabel1=NULL;
 Ewl_Widget *statlabel2=NULL;
 Ewl_Widget *goto_entry;
 double curscale=1.0;
-//double moveinc=0.1;
 //for later, margin cuttoffs
 int fitmode=0;
 double leftmarge=0;
@@ -131,7 +130,6 @@ int get_left_margin()
     for(hor=0;hor<imgw;hor++)
     {
         
-        //fprintf(stderr,"firstpix:%d",firstpix);
         for(ver=0;ver<imgh;ver++)
         {
             
@@ -152,10 +150,8 @@ int get_right_margin()
     for(hor=imgw-1;hor>=0;hor--)
     {
 
-        //fprintf(stderr,"firstpix:%d",firstpix);
         for(ver=0;ver<imgh;ver++)
         {
-            //fprintf(stderr,"pix:%d",imgptr[ver*imgw+hor]);
             if(imgptr[ver*imgw+hor]!=firstpix)
                 return imgw-1-hor;
         }
@@ -220,14 +216,10 @@ void resize_and_rescale(double scale)
     int sp_inner;
     double ltrimpct=0.0,rtrimpct=0.0;
     
-    //ewl_object_maximum_h_set(EWL_OBJECT(pdfwidget),99999);
-    //ewl_object_minimum_h_set(EWL_OBJECT(pdfwidget),0);
     sp_inner=CURRENT_W(scrollpane)-INSET_HORIZONTAL(scrollpane)-PADDING_HORIZONTAL(scrollpane);
-    //if(EWL_SCROLLPANE(scrollpane)->vflag)
-    //    sp_inner-=CURRENT_W(EWL_OBJECT(EWL_SCROLLPANE(scrollpane)->vscrollbar));
         
-    //ewl_pdf_size_get(EWL_PDF(pdfwidget),&docwidth,&docheight);
     epdf_page_size_get (EWL_PDF(pdfwidget)->pdf_page,&docwidth,&docheight);
+
     if(fitmode==0)
         docscale=((double)sp_inner)/((double)docwidth)*scale;
     else if(fitmode==1)
@@ -238,23 +230,16 @@ void resize_and_rescale(double scale)
         
     }
     ewl_pdf_scale_set(EWL_PDF(pdfwidget),docscale,docscale);
-    //ewl_object_custom_w_set(EWL_OBJECT(pdfwidget),floor(((double)sp_inner)*scale));
     
-    //ewl_object_custom_w_set(EWL_OBJECT(pdfwidget),floor(((double)sp_inner)*scale));
-    //ewl_object_custom_h_set(EWL_OBJECT(pdfwidget),floor(((double)docheight)/((double)docwidth)*((double)sp_inner)*scale));
     ewl_object_custom_w_set(EWL_OBJECT(pdfwidget),floor(((double)docwidth)*docscale));
     ewl_object_custom_h_set(EWL_OBJECT(pdfwidget),floor(((double)docheight)*docscale));
-    //ewl_object_position_request(EWL_OBJECT(pdfwidget),0,0);
     ewl_widget_configure(pdfwidget);
     
-    //ewl_object_custom_w_set(EWL_OBJECT(trimpane),floor(((double)docwidth)*docscale));
-    //ewl_object_custom_h_set(EWL_OBJECT(trimpane),floor(((double)docheight)*docscale));
     ewl_object_custom_w_set(EWL_OBJECT(trimpane),floor(((double)sp_inner)*scale));
     ewl_object_custom_h_set(EWL_OBJECT(trimpane),floor(((double)docheight)*docscale));
     ewl_object_position_request(EWL_OBJECT(trimpane),0,0);
     
 
-    //ewl_object_place(EWL_OBJECT(pdfwidget),0,0,floor(((double)docwidth)*docscale),floor(((double)docheight)*docscale));
     ewl_widget_configure(trimpane);
     ewl_widget_configure(scrollpane);
     if(fitmode==0)
@@ -349,22 +334,18 @@ void cb_key_down(Ewl_Widget *w, void *ev, void *data)
         ewl_pdf_page_next(EWL_PDF(curwidget));
         resize_and_rescale(curscale);
         fprintf(stderr,"l:%d; r:%d; t:%d; b:%d\n",get_left_margin(),get_right_margin(),get_top_margin(),get_bottom_margin());
-        //update_statusbar();
         break;
     case 9:
         ewl_pdf_page_previous(EWL_PDF(curwidget));
         resize_and_rescale(curscale);
-        //update_statusbar();
         break;
     case 8:
         curscale+=((double)get_settings()->zoominc)/100.0;
         resize_and_rescale(curscale);
-        //update_statusbar();
         break;
     case 7:
         curscale-=((double)get_settings()->zoominc)/100.0;
         resize_and_rescale(curscale);
-        //update_statusbar();
         break;
     /*case 6:
         if(ewl_pdf_orientation_get(EWL_PDF(curwidget))==EPDF_PAGE_ORIENTATION_LANDSCAPE)
@@ -372,7 +353,6 @@ void cb_key_down(Ewl_Widget *w, void *ev, void *data)
         else
             ewl_pdf_orientation_set(EWL_PDF(curwidget),EPDF_PAGE_ORIENTATION_LANDSCAPE);
         resize_and_rescale(curscale);
-        //update_statusbar();
         break;*/
     case 1:
         move_hscrollbar(EWL_SCROLLPANE(scrollpane), -get_horizontal_pan_inc());
@@ -424,7 +404,6 @@ void cb_menu_key_down(Ewl_Widget *w, void *ev, void *data)
         ewl_menu_cb_expand(curwidget,NULL,NULL);
         ewl_widget_focus_send(EWL_WIDGET(EWL_MENU(curwidget)->popup));
         int curpage=ewl_pdf_page_get(EWL_PDF(pdfwidget))+1;
-        //sprintf(temp,"%d",curpage);
         ewl_text_text_set(EWL_TEXT(goto_entry),"");
         ewl_widget_focus_send(goto_entry);
         break;
@@ -487,10 +466,6 @@ void destroy_cb ( Ewl_Widget *w, void *event, void *data )
 {
     ewl_widget_destroy ( w );
     ewl_main_quit();
-    //double cropwidth=ewl_pdf_pdf_page_get(EWL_PDF(pdfwidget))->page->getCropWidth();
-    //int docwidth,docheight;
-    //epdf_page_size_get (EWL_PDF(pdfwidget)->pdf_page,&docwidth,&docheight);
-    //fprintf(stderr,"full:%d crop:%f",docwidth,cropwidth);
 }
 void cb_pdfwidget_resized ( Ewl_Widget *w, void *event, void *data )
 {
@@ -555,8 +530,6 @@ int main ( int argc, char ** argv )
     ewl_callback_append(scrollpane,EWL_CALLBACK_REVEAL,cb_scrollpane_revealed,NULL);
     ewl_scrollpane_hscrollbar_flag_set(EWL_SCROLLPANE(scrollpane),EWL_SCROLLPANE_FLAG_ALWAYS_HIDDEN);
     ewl_scrollpane_vscrollbar_flag_set(EWL_SCROLLPANE(scrollpane),EWL_SCROLLPANE_FLAG_ALWAYS_HIDDEN);
-    //ewl_object_fill_policy_set(EWL_OBJECT(scrollpane), EWL_FLAG_FILL_FILL);
-    //ewl_theme_data_str_set(EWL_WIDGET(scrollpane),"/scrollpane/group","ewl/blank");
     ewl_widget_show(scrollpane);
     
     trimpane=ewl_scrollpane_new();
@@ -564,7 +537,6 @@ int main ( int argc, char ** argv )
     ewl_object_alignment_set(EWL_OBJECT(trimpane),EWL_FLAG_ALIGN_LEFT|EWL_FLAG_ALIGN_TOP);
     ewl_scrollpane_hscrollbar_flag_set(EWL_SCROLLPANE(trimpane),EWL_SCROLLPANE_FLAG_ALWAYS_HIDDEN);
     ewl_scrollpane_vscrollbar_flag_set(EWL_SCROLLPANE(trimpane),EWL_SCROLLPANE_FLAG_ALWAYS_HIDDEN);
-    //ewl_theme_data_str_set(EWL_WIDGET(trimpane),"/scrollpane/group","ewl/blank");
     ewl_widget_show(trimpane);
     
     statbar=ewl_hbox_new();
@@ -574,7 +546,6 @@ int main ( int argc, char ** argv )
     ewl_widget_show(statbar);
     
     statlabel1=ewl_label_new();   
-    //ewl_statusbar_left_append(EWL_STATUSBAR(statbar),statlabel1);
     ewl_container_child_append(EWL_CONTAINER(statbar),statlabel1);
     ewl_theme_data_str_set(EWL_WIDGET(statlabel1),"/label/group","ewl/oi_statbar_label_left");
     ewl_theme_data_str_set(EWL_WIDGET(statlabel1),"/label/textpart","ewl/oi_statbar_label_left/text");
@@ -582,7 +553,6 @@ int main ( int argc, char ** argv )
     ewl_widget_show(statlabel1);
     
     statlabel2=ewl_label_new();   
-    //ewl_statusbar_right_append(EWL_STATUSBAR(statbar),statlabel2);
     ewl_container_child_append(EWL_CONTAINER(statbar),statlabel2);
     ewl_theme_data_str_set(EWL_WIDGET(statlabel2),"/label/group","ewl/oi_statbar_label_right");
     ewl_theme_data_str_set(EWL_WIDGET(statlabel2),"/label/textpart","ewl/oi_statbar_label_right/text");
