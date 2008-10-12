@@ -262,20 +262,37 @@ void resize_and_rescale(double scale)
 {
     int docwidth,docheight;
     double docscale;
-    int sp_inner;
     double ltrimpct=0.0,rtrimpct=0.0;
     
-    sp_inner=CURRENT_W(scrollpane)-INSET_HORIZONTAL(scrollpane)-PADDING_HORIZONTAL(scrollpane);
+    int sp_inner_w = CURRENT_W(scrollpane) - INSET_HORIZONTAL(scrollpane) -
+        PADDING_HORIZONTAL(scrollpane);
+    int sp_inner_h = CURRENT_H(scrollpane) - INSET_VERTICAL(scrollpane) -
+        PADDING_VERTICAL(scrollpane);
         
     page_size_get(&docwidth, &docheight);
 
-    if(fitmode==0)
-        docscale=((double)sp_inner)/((double)docwidth)*scale;
+    int orientation_horizontal;
+    switch(epdf_page_orientation_get(EWL_PDF(pdfwidget)->pdf_page)) {
+        case EPDF_PAGE_ORIENTATION_PORTRAIT:
+        case EPDF_PAGE_ORIENTATION_UPSIDEDOWN:
+            orientation_horizontal = 0;
+            break;
+        case EPDF_PAGE_ORIENTATION_LANDSCAPE:
+        case EPDF_PAGE_ORIENTATION_SEASCAPE:
+            orientation_horizontal = 1;
+    }
+
+    if(fitmode==0) {
+        if(orientation_horizontal)
+            docscale = ((double)sp_inner_h)/((double)docheight)*scale;
+        else // orientation vertical
+            docscale = ((double)sp_inner_w)/((double)docwidth)*scale;
+    }
     else if(fitmode==1)
     {
         ltrimpct=((double)get_settings()->ltrimpad)/((double)docwidth);
         rtrimpct=((double)get_settings()->rtrimpad)/((double)docwidth);
-        docscale=((double)sp_inner)/((1.0-leftmarge+ltrimpct-rightmarge+rtrimpct)*((double)docwidth))*scale;
+        docscale=((double)sp_inner_w)/((1.0-leftmarge+ltrimpct-rightmarge+rtrimpct)*((double)docwidth))*scale;
         
     }
     ewl_pdf_scale_set(EWL_PDF(pdfwidget),docscale,docscale);
@@ -284,8 +301,17 @@ void resize_and_rescale(double scale)
     ewl_object_custom_h_set(EWL_OBJECT(pdfwidget),floor(((double)docheight)*docscale));
     ewl_widget_configure(pdfwidget);
     
-    ewl_object_custom_w_set(EWL_OBJECT(trimpane),floor(((double)sp_inner)*scale));
-    ewl_object_custom_h_set(EWL_OBJECT(trimpane),floor(((double)docheight)*docscale));
+    if(orientation_horizontal) {
+        ewl_object_custom_w_set(EWL_OBJECT(trimpane),
+                floor(((double)docwidth)*docscale));
+        ewl_object_custom_h_set(EWL_OBJECT(trimpane),
+                floor(((double)sp_inner_h)*scale));
+    } else {
+        ewl_object_custom_w_set(EWL_OBJECT(trimpane),
+                floor(((double)sp_inner_w)*scale));
+        ewl_object_custom_h_set(EWL_OBJECT(trimpane),
+                floor(((double)docheight)*docscale));
+    }
     ewl_object_position_request(EWL_OBJECT(trimpane),0,0);
     
 
