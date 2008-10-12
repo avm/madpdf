@@ -220,12 +220,40 @@ int get_bottom_margin()
     }
     return 0;
 }
+
+#define SWAP(type, a, b) \
+do { \
+    type tmp = *a; \
+    *a = *b; \
+    *b = tmp; \
+} while(0)
+
+static void page_size_get(int *width, int *height)
+{
+    epdf_page_size_get(EWL_PDF(pdfwidget)->pdf_page, width, height);
+    switch(epdf_page_orientation_get(EWL_PDF(pdfwidget)->pdf_page)) {
+            case EPDF_PAGE_ORIENTATION_LANDSCAPE:
+            case EPDF_PAGE_ORIENTATION_SEASCAPE:
+                SWAP(int, width, height);
+    }
+}
+
+static void page_scale_get(double *hscale, double *vscale)
+{
+    ewl_pdf_scale_get(EWL_PDF(pdfwidget), hscale, vscale);
+    switch(epdf_page_orientation_get(EWL_PDF(pdfwidget)->pdf_page)) {
+            case EPDF_PAGE_ORIENTATION_LANDSCAPE:
+            case EPDF_PAGE_ORIENTATION_SEASCAPE:
+                SWAP(double, hscale, vscale);
+    }
+}
+
 void calculate_margins()
 {
     int docwidth,docheight;
     double hscale,vscale;
-    epdf_page_size_get (EWL_PDF(pdfwidget)->pdf_page,&docwidth,&docheight);
-    ewl_pdf_scale_get(EWL_PDF(pdfwidget),&hscale,&vscale);
+    page_size_get(&docwidth, &docheight);
+    page_scale_get(&hscale, &vscale);
     leftmarge=((double)get_left_margin())/floor(((double)docwidth)*hscale);
     rightmarge=((double)get_right_margin())/floor(((double)docwidth)*hscale);
     fprintf(stderr,"%f %f",leftmarge,rightmarge);
@@ -239,7 +267,7 @@ void resize_and_rescale(double scale)
     
     sp_inner=CURRENT_W(scrollpane)-INSET_HORIZONTAL(scrollpane)-PADDING_HORIZONTAL(scrollpane);
         
-    epdf_page_size_get (EWL_PDF(pdfwidget)->pdf_page,&docwidth,&docheight);
+    page_size_get(&docwidth, &docheight);
 
     if(fitmode==0)
         docscale=((double)sp_inner)/((double)docwidth)*scale;
@@ -367,13 +395,13 @@ void cb_key_down(Ewl_Widget *w, void *ev, void *data)
         curscale-=((double)get_settings()->zoominc)/100.0;
         resize_and_rescale(curscale);
         break;
-    /*case 6:
+    case 6:
         if(ewl_pdf_orientation_get(EWL_PDF(curwidget))==EPDF_PAGE_ORIENTATION_LANDSCAPE)
             ewl_pdf_orientation_set(EWL_PDF(curwidget),EPDF_PAGE_ORIENTATION_PORTRAIT);
         else
             ewl_pdf_orientation_set(EWL_PDF(curwidget),EPDF_PAGE_ORIENTATION_LANDSCAPE);
         resize_and_rescale(curscale);
-        break;*/
+        break;
     case 1:
         move_hscrollbar(EWL_SCROLLPANE(scrollpane), -get_horizontal_pan_inc());
         break;
