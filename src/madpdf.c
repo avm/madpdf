@@ -97,10 +97,7 @@ static double pan_inc(double doc, double win)
 
     /* To move to next step (we can do that pan_steps - 1 times),
      * advance a (pan_steps - 1)th part of what is outside the window. */
-    double pan_step_amount = (doc - win) / (pan_steps - 1);
-
-    /* Now convert that to scrollbar movement units. */
-    return pan_step_amount / (doc - win);
+    return 1.0 / (pan_steps - 1);
 }
 
 double get_horizontal_pan_inc()
