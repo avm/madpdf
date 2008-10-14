@@ -379,16 +379,27 @@ static double clamp(double min, double val, double max)
     return fmax(min, fmin(val, max));
 }
 
+/* Calculate a new scrollbar position, snapping to edges */
+static double scroll_pos_add(double position, double amount)
+{
+    double res = clamp(0.0, position + amount, 1.0);
+    if(amount > 0 && (1.0 - res) < amount * 0.1)
+        res = 1.0;
+    if(amount < 0 && res < -amount * 0.1)
+        res = 0.0;
+    return res;
+}
+
 static void move_hscrollbar(Ewl_Scrollpane *s, double amount)
 {
     ewl_scrollpane_hscrollbar_value_set(s,
-            clamp(0.0, ewl_scrollpane_hscrollbar_value_get(s) + amount, 1.0));
+            scroll_pos_add(ewl_scrollpane_hscrollbar_value_get(s), amount));
     update_statusbar();
 }
 static void move_vscrollbar(Ewl_Scrollpane *s, double amount)
 {
     ewl_scrollpane_vscrollbar_value_set(s,
-            clamp(0.0, ewl_scrollpane_vscrollbar_value_get(s) + amount, 1.0));
+            scroll_pos_add(ewl_scrollpane_vscrollbar_value_get(s), amount));
     update_statusbar();
 }
 
