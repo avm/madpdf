@@ -395,6 +395,42 @@ static void move_vscrollbar(Ewl_Scrollpane *s, double amount)
     update_statusbar();
 }
 
+/* Renormalize scroll position (0.0..1.0) to scroll location (-1.0..1.0) */
+static double from_scroll_position(double position)
+{
+    return position * 2.0 - 1.0;
+}
+/* Inverse of from_scroll_position() */
+static double to_scroll_position(double location)
+{
+    return (location + 1.0) / 2.0;
+}
+
+/* Swap scrollbar values after an orientation change.
+ * direction == -1 -> turn clockwise, 1 -> counter-clockwise. */
+static void turn_scrollbars(Ewl_Scrollpane *s, int direction)
+{
+    double h = from_scroll_position(ewl_scrollpane_hscrollbar_value_get(s));
+    double v = from_scroll_position(ewl_scrollpane_vscrollbar_value_get(s));
+
+    double new_h =  v * direction;
+    double new_v = -h * direction;
+
+    ewl_scrollpane_hscrollbar_value_set(s, to_scroll_position(new_h));
+    ewl_scrollpane_vscrollbar_value_set(s, to_scroll_position(new_v));
+    update_statusbar();
+}
+
+static void change_orientation(Ewl_Widget *pdfwidget)
+{
+    Epdf_Page_Orientation o = ewl_pdf_orientation_get(EWL_PDF(pdfwidget));
+    o = EPDF_PAGE_ORIENTATION_LANDSCAPE + EPDF_PAGE_ORIENTATION_PORTRAIT - o;
+    ewl_pdf_orientation_set(EWL_PDF(pdfwidget), o);
+
+    turn_scrollbars(EWL_SCROLLPANE(scrollpane),
+            2 * (EPDF_PAGE_ORIENTATION_PORTRAIT == o) - 1);
+}
+
 void cb_key_down(Ewl_Widget *w, void *ev, void *data)
 {
     Ewl_Widget *curwidget;
@@ -422,10 +458,7 @@ void cb_key_down(Ewl_Widget *w, void *ev, void *data)
         resize_and_rescale(curscale);
         break;
     case 6:
-        if(ewl_pdf_orientation_get(EWL_PDF(curwidget))==EPDF_PAGE_ORIENTATION_LANDSCAPE)
-            ewl_pdf_orientation_set(EWL_PDF(curwidget),EPDF_PAGE_ORIENTATION_PORTRAIT);
-        else
-            ewl_pdf_orientation_set(EWL_PDF(curwidget),EPDF_PAGE_ORIENTATION_LANDSCAPE);
+        change_orientation(curwidget);
         resize_and_rescale(curscale);
         break;
     case 1:
