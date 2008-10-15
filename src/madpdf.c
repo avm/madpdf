@@ -54,6 +54,9 @@ int fitmode=0;
 double leftmarge=0;
 double rightmarge=0;
 
+static void resize_and_rescale(double scale);
+static int hide_hint(void *ignored);
+static void update_statusbar();
 
 /* Returns edje theme file name (pointer to static buffer). */
 const char* get_theme_file()
@@ -269,6 +272,8 @@ void resize_and_rescale(double scale)
     int sp_inner_h = CURRENT_H(scrollpane) - INSET_VERTICAL(scrollpane) -
         PADDING_VERTICAL(scrollpane);
         
+    hide_hint(NULL);
+
     page_size_get(&docwidth, &docheight);
 
     int orientation_horizontal;
@@ -394,11 +399,12 @@ static double scroll_pos_add(double position, double amount)
 }
 
 static Evas_Object *scroll_hint = NULL;
+static Ecore_Timer *hint_timer = NULL;
 
-static int hide_hint(void *ptimer)
+static int hide_hint(void *ignored)
 {
     evas_object_hide(scroll_hint);
-    *(Ecore_Timer **)ptimer = NULL;
+    hint_timer = NULL;
     return 0;
 }
 
@@ -418,11 +424,10 @@ static void display_hint(double scroll_amount)
             0, y_coord, CURRENT_W(scrollpane), y_coord);
     evas_object_show(scroll_hint);
 
-    static Ecore_Timer *t = NULL;
-    if(t) { // previously set, did not fire
-        ecore_timer_del(t);
+    if(hint_timer) { // previously set, did not fire
+        ecore_timer_del(hint_timer);
     }
-    t = ecore_timer_add(2.0, hide_hint, &t);
+    hint_timer = ecore_timer_add(2.0, hide_hint, NULL);
 }
 
 static void move_hscrollbar(Ewl_Scrollpane *s, double direction)
