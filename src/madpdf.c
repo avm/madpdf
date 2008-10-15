@@ -78,11 +78,14 @@ void update_main_app()
     
 }
 
-static double pan_inc(double doc, double win)
+/* Calculate the relative and absolute pan increments for the given
+ * window and document sizes. Return them in *relative and *absolute. */
+static void pan_inc(double doc, double win, double *relative, double *absolute)
 {
-    if(doc <= win)
+    if(doc <= win) {
         // no need to scroll
-        return 0.0;
+        *relative = *absolute = 0.0;
+    }
 
     /* Now panning comes into the picture.
      * We have this setting, the "minimum pan overlap" (%).
@@ -97,21 +100,21 @@ static double pan_inc(double doc, double win)
 
     /* To move to next step (we can do that pan_steps - 1 times),
      * advance a (pan_steps - 1)th part of what is outside the window. */
-    return 1.0 / (pan_steps - 1);
+    *relative = 1.0 / (pan_steps - 1);
+    *absolute = *relative * (doc - win);
 }
 
-double get_horizontal_pan_inc()
+void get_horizontal_pan_inc(double *rel, double *abs)
 {
     double ws=(double)CURRENT_W(scrollpane);
     double wt=(double)CURRENT_W(trimpane);
-    return pan_inc(wt, ws);
-    
+    pan_inc(wt, ws, rel, abs);
 }
-double get_vertical_pan_inc()
+void get_vertical_pan_inc(double *rel, double *abs)
 {
     double hs=(double)CURRENT_H(scrollpane);
     double ht=(double)CURRENT_H(trimpane);
-    return pan_inc(ht, hs);
+    pan_inc(ht, hs, rel, abs);
 }
 
 int translate_key(Ewl_Event_Key_Down* e)
@@ -390,16 +393,55 @@ static double scroll_pos_add(double position, double amount)
     return res;
 }
 
-static void move_hscrollbar(Ewl_Scrollpane *s, double amount)
+static Evas_Object *scroll_hint = NULL;
+
+static int hide_hint(void *ptimer)
 {
+    evas_object_hide(scroll_hint);
+    *(Ecore_Timer **)ptimer = NULL;
+    return 0;
+}
+
+static void display_hint(double scroll_amount)
+{
+    if(!scroll_hint) {
+        Ewl_Embed *emb = ewl_embed_widget_find(pdfwidget);
+        scroll_hint = evas_object_line_add(emb->canvas);
+        evas_object_color_set(scroll_hint, 0, 200, 0, 255);
+    }
+
+    int y_coord = round(scroll_amount);
+    if(y_coord < 0) {
+        y_coord += CURRENT_H(scrollpane);
+    }
+    evas_object_line_xy_set(scroll_hint,
+            0, y_coord, CURRENT_W(scrollpane), y_coord);
+    evas_object_show(scroll_hint);
+
+    static Ecore_Timer *t = NULL;
+    if(t) { // previously set, did not fire
+        ecore_timer_del(t);
+    }
+    t = ecore_timer_add(2.0, hide_hint, &t);
+}
+
+static void move_hscrollbar(Ewl_Scrollpane *s, double direction)
+{
+    double rel, abs;
+    get_horizontal_pan_inc(&rel, &abs);
+    rel *= direction;
     ewl_scrollpane_hscrollbar_value_set(s,
-            scroll_pos_add(ewl_scrollpane_hscrollbar_value_get(s), amount));
+            scroll_pos_add(ewl_scrollpane_hscrollbar_value_get(s), rel));
     update_statusbar();
 }
-static void move_vscrollbar(Ewl_Scrollpane *s, double amount)
+static void move_vscrollbar(Ewl_Scrollpane *s, double direction)
 {
+    double rel, abs;
+    get_vertical_pan_inc(&rel, &abs);
+    rel *= direction;
     ewl_scrollpane_vscrollbar_value_set(s,
-            scroll_pos_add(ewl_scrollpane_vscrollbar_value_get(s), amount));
+            scroll_pos_add(ewl_scrollpane_vscrollbar_value_get(s), rel));
+    display_hint(-abs * direction);
     update_statusbar();
 }
 
@@ -470,16 +512,16 @@ void cb_key_down(Ewl_Widget *w, void *ev, void *data)
         resize_and_rescale(curscale);
         break;
     case 1:
-        move_hscrollbar(EWL_SCROLLPANE(scrollpane), -get_horizontal_pan_inc());
+        move_hscrollbar(EWL_SCROLLPANE(scrollpane), -1);
         break;
     case 2:
-        move_hscrollbar(EWL_SCROLLPANE(scrollpane), get_horizontal_pan_inc());
+        move_hscrollbar(EWL_SCROLLPANE(scrollpane),  1);
         break;
     case 3:
-        move_vscrollbar(EWL_SCROLLPANE(scrollpane), get_vertical_pan_inc());
+        move_vscrollbar(EWL_SCROLLPANE(scrollpane),  1);
         break;    
     case 4:
-        move_vscrollbar(EWL_SCROLLPANE(scrollpane), -get_vertical_pan_inc());
+        move_vscrollbar(EWL_SCROLLPANE(scrollpane), -1);
         break;
     case 5:
         if(fitmode==0)
